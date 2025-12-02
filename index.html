@@ -133,6 +133,48 @@
     .ace_gutter { background: var(--bg-gutter) !important; color: var(--text-muted) !important; border-right: 1px solid var(--border); }
     .ace_print-margin { display: none !important; } 
 
+    /* --- CORREÇÕES VISUAIS PARA MODO ESCURO (ACE EDITOR) --- */
+    
+    /* 1. Melhora a cor do número da linha ativa no Gutter */
+    body.dark-mode .ace_gutter-active-line {
+      background-color: #334155 !important; /* Azul ardósia sutil */
+      color: #ffffff !important; /* Número em branco */
+    }
+
+    /* 2. Melhora a cor da seleção de texto (tira o cinza feio) */
+    body.dark-mode .ace_marker-layer .ace_selection {
+      background: rgba(56, 189, 248, 0.25) !important; /* Azul da sua marca com transparência */
+      border: 1px solid rgba(56, 189, 248, 0.1);
+    }
+
+/* --- CUSTOMIZAÇÃO DO CURSOR VIM --- */
+
+    /* === MODO CLARO (Default) === */
+
+    /* 1. Normal Mode (Bloco Sólido) */
+    .ace_editor.normal-mode .ace_cursor {
+      background-color: rgba(14, 165, 233, 0.5) !important; /* Azul translúcido */
+      border: none !important;
+    }
+    /* 2. Cursores Ocultos/Seleção (Bloco Oco) */
+    .ace_editor.normal-mode .ace_hidden-cursors .ace_cursor {
+      background-color: transparent !important;
+      border: 1px solid #0ea5e9 !important;
+    }
+
+    /* === MODO ESCURO === */
+
+    /* 1. Normal Mode (Bloco Neon) */
+    body.dark-mode .ace_editor.normal-mode .ace_cursor {
+      background-color: rgba(56, 189, 248, 0.5) !important;
+      border: none !important;
+    }
+    /* 2. Cursores Ocultos/Seleção (Bloco Oco Neon) */
+    body.dark-mode .ace_editor.normal-mode .ace_hidden-cursors .ace_cursor {
+      background-color: transparent !important;
+      border: 1px solid #38bdf8 !important;
+    }
+
     /* --- Status Bar --- */
     #status {
       height: 32px; background: var(--bg-surface); color: var(--text-muted); border-top: 1px solid var(--border);
@@ -438,7 +480,7 @@
         {
           name: "SOAP Básico",
           trigger: "soap",
-          content: "S: ${1:Queixa principal...}\n\nO: ${2:Exame físico...}\n\nA: ${3:Hipóteses...}\n\nP: ${4:Conduta...}"
+          content: "S: # QP/HDA: ${1:Paciente refere...}\n   # HPP: ${2:Nega HAS, DM ou comorbidades}\n   # MEDS: ${3:Nega uso contínuo}\n   # ALERGIAS: ${4:Nega}\n\nO: BEG, LOTE, Corado, Hidratado, Anictérico.\n   > Sinais: PA ${5:120x80} mmHg | FC ${6:72} bpm | Sat ${7:98}% (AA)\n   > AR: ${8:MV+ s/ RA, eupneico}\n   > ACV: ${9:RCR 2T BNF s/ sopros}\n   > ABD: ${10:Flácido, indolor, RHA+}\n   > EXT: ${11:S/ edema, panturrilhas livres}\n\nA: # HD: ${12:}\n   # CID: ${13:}\n\nP: 1. Conduta: ${14:Orientações e Sinais de alarme}\n   2. Prescrição: ${15:Segue receita}\n   3. Exames: ${16:Não solicitados}"
         },
         {
           name: "Exame Normal",
@@ -461,13 +503,13 @@
           fontFamily: "'JetBrains Mono', 'Menlo', 'Consolas', monospace",
           fontSize: "16px", // Bom tamanho para mobile
           wrap: true,
-          showLineNumbers: true,
+          showLineNumbers: false,
           showGutter: true,
-          highlightActiveLine: true,
+          highlightActiveLine: false,
           printMargin: false,
           displayIndentGuides: false,
           scrollPastEnd: 0.5,
-          enableBasicAutocompletion: true,
+          enableBasicAutocompletion: false,
           enableSnippets: true,
           placeholder: "Digite a evolução do paciente aqui...\nUse 'soap' + Tab para iniciar um modelo."
         });
