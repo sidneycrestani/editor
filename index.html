@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <!-- Adicionado interactive-widget para melhor comportamento com teclado virtual -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-  <title>Editor Clínico Mobile</title>
+  <title>Editor Clínico</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -509,12 +509,23 @@
           printMargin: false,
           displayIndentGuides: false,
           scrollPastEnd: 0.5,
-          enableBasicAutocompletion: false,
-          enableSnippets: true,
+		  // --- AUTOCOMPLETAR ---
+          enableBasicAutocompletion: true, // Necessário
+          enableLiveAutocompletion: false,  // Abre o popup automaticamente ao digitar
+          enableSnippets: true,            // Seus modelos (SOAP, etc)
           placeholder: "Digite a evolução do paciente aqui...\nUse 'soap' + Tab para iniciar um modelo."
         });
+
         this.editor.container.style.lineHeight = "1.65";
         this.editor.renderer.setScrollMargin(20, 15, 20, 15); 
+        // Remove o menu de configurações (Ctrl + ,)
+        this.editor.commands.removeCommand("showSettingsMenu");
+        
+        // Remove a paleta de comandos (F1 ou Ctrl+Shift+P)
+        this.editor.commands.removeCommand("openCommandPallete"); 
+        
+        // Remove atalhos que podem atrapalhar (ex: Go to line)
+        this.editor.commands.removeCommand("gotoline"); 
       },
 
       setupEvents: function() {
