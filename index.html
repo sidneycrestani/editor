@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor Clínico Lite</title>
+  <!-- Adicionado interactive-widget para melhor comportamento com teclado virtual -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+  <title>Editor Clínico Mobile</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,7 +12,7 @@
   
   <style>
     :root {
-      /* --- Cores (Mantidas v15/v17) --- */
+      /* --- Cores --- */
       --bg-app: #f1f5f9;
       --bg-surface: #ffffff;
       --bg-gutter: #f8fafc;
@@ -67,24 +68,33 @@
     }
 
     /* --- Scrollbar --- */
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: var(--sb-track); }
-    ::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 4px; }
 
-    /* --- Toolbar --- */
+    /* --- Toolbar (Mobile Optimized) --- */
     #toolbar {
-      height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+      height: 60px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px;
       background: var(--bg-surface); border-bottom: 1px solid var(--border); user-select: none;
       box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 10;
+      overflow-x: auto; /* Rolagem horizontal no mobile */
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap; /* Impede quebra de linha */
     }
-    .group { display: flex; gap: 4px; padding-right: 12px; margin-right: 12px; border-right: 1px solid var(--border); }
-    .group:last-child { border: none; }
+    
+    /* Esconder scrollbar da toolbar mas manter funcionalidade */
+    #toolbar::-webkit-scrollbar { height: 0px; display: none; }
+
+    .group { display: flex; gap: 4px; padding-right: 12px; margin-right: 12px; border-right: 1px solid var(--border); align-items: center; }
+    .group:last-child { border: none; padding-right: 0; margin-right: 0; }
 
     button {
       background: transparent; border: 1px solid transparent; color: var(--text-main);
-      padding: 8px 10px; border-radius: 6px; cursor: pointer;
+      padding: 8px 12px; border-radius: 8px; cursor: pointer;
       font-size: 13px; font-weight: 500; font-family: inherit;
-      display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px; 
+      transition: all 0.2s; flex-shrink: 0; /* Impede botões de esmagarem */
+      min-height: 40px; /* Área de toque melhorada */
     }
     button:hover { background: var(--btn-hover); }
     button:active { transform: translateY(1px); }
@@ -96,57 +106,60 @@
     }
     button.cta:hover { background: var(--primary-hover); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
     
-    button.icon-only { padding: 8px; }
-    button svg { width: 18px; height: 18px; stroke-width: 2px; }
-    
-    /* Botão de gravação ativo */
-    button.recording { color: var(--danger); background: #fef2f2; border-color: var(--danger); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    button.icon-only { padding: 8px; width: 40px; }
+    button svg { width: 20px; height: 20px; stroke-width: 2px; }
 
+    /* Responsividade dos Labels */
     .label { display: none; }
-    @media(min-width: 768px) { .label { display: block; } }
+    @media(min-width: 768px) { 
+      .label { display: inline-block; } 
+      button { padding: 8px 10px; min-height: auto; }
+      button.icon-only { width: auto; padding: 8px; }
+      #toolbar { height: 56px; overflow-x: visible; }
+    }
 
     /* --- Editor --- */
-    #editor-wrapper { flex: 1; display: flex; justify-content: center; background: var(--bg-app); padding: 24px; position: relative; }
+    #editor-wrapper { flex: 1; display: flex; justify-content: center; background: var(--bg-app); padding: 16px; position: relative; overflow: hidden; }
+    @media(max-width: 768px) { #editor-wrapper { padding: 8px; } }
+
     #editor { 
       width: 100%; max-width: 1024px; height: 100%; 
       background: var(--bg-surface); border: 1px solid var(--border); 
       border-radius: 8px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1);
     }
-    /* Placeholder do Ace */
+    
     .ace_placeholder { font-family: 'JetBrains Mono', monospace !important; color: var(--text-muted) !important; opacity: 0.5; padding: 0 4px; }
-
     .ace_editor { font-family: 'JetBrains Mono', monospace !important; }
     .ace_gutter { background: var(--bg-gutter) !important; color: var(--text-muted) !important; border-right: 1px solid var(--border); }
     .ace_print-margin { display: none !important; } 
 
     /* --- Status Bar --- */
     #status {
-      height: 28px; background: var(--bg-surface); color: var(--text-muted); border-top: 1px solid var(--border);
+      height: 32px; background: var(--bg-surface); color: var(--text-muted); border-top: 1px solid var(--border);
       display: flex; justify-content: space-between; align-items: center; padding: 0 16px;
-      font-size: 11px; font-weight: 500;
+      font-size: 11px; font-weight: 500; flex-shrink: 0;
     }
     .status-item { display: flex; align-items: center; gap: 6px; }
     #save-status { color: var(--success); font-weight: 600; opacity: 0; transition: opacity 0.5s; }
 
-    /* --- Toast (FIX: Z-Index aumentado) --- */
+    /* --- Toast --- */
     #toast {
       position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
       background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 30px;
       font-size: 14px; font-weight: 500; opacity: 0; visibility: hidden; 
-      z-index: 2001; /* FIX: Maior que o modal (1000) */
+      z-index: 2001; 
       box-shadow: 0 10px 25px rgba(0,0,0,0.2);
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 8px; width: max-content; max-width: 90%;
     }
     #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
-    /* --- Modals --- */
+    /* --- Modals (Mobile Friendly) --- */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: var(--overlay-bg); backdrop-filter: blur(2px);
       z-index: 1000; display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden; transition: opacity 0.2s;
+      opacity: 0; visibility: hidden; transition: opacity 0.2s; padding: 10px;
     }
     .modal-overlay.open { opacity: 1; visibility: visible; }
     
@@ -155,11 +168,12 @@
       border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
       display: flex; flex-direction: column; overflow: hidden;
       border: 1px solid var(--border); transform: scale(0.95); transition: transform 0.2s;
+      width: 100%; max-height: 90vh;
     }
     .modal-overlay.open .modal { transform: scale(1); }
 
-    .modal-md { width: 550px; max-width: 90%; max-height: 85vh; }
-    .modal-lg { width: 700px; max-width: 95%; height: 80vh; }
+    .modal-md { max-width: 550px; }
+    .modal-lg { max-width: 700px; height: 80vh; }
 
     .modal-header {
       padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--bg-gutter);
@@ -171,7 +185,7 @@
       display: flex; justify-content: flex-end; gap: 10px;
     }
 
-    /* --- Snippet Manager --- */
+    /* --- Snippet Manager UI --- */
     .view-container { flex: 1; display: none; flex-direction: column; }
     .view-container.active { display: flex; }
 
@@ -190,6 +204,8 @@
     .snippet-actions { display: flex; gap: 8px; }
 
     .edit-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px; }
+    @media(max-width: 600px) { .edit-grid { grid-template-columns: 1fr; gap: 10px; } }
+
     .input-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
     .input-group input {
       width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
@@ -200,7 +216,7 @@
       border: 1px solid var(--border); border-radius: 6px;
       background: var(--bg-app); color: var(--text-main);
       font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5;
-      resize: none; outline: none;
+      resize: none; outline: none; min-height: 150px;
     }
     .code-editor:focus { border-color: var(--primary); background: var(--bg-surface); }
     .btn-secondary { background: var(--bg-surface); border: 1px solid var(--border); }
@@ -216,55 +232,50 @@
   <div id="toolbar">
     <!-- Arquivo -->
     <div class="group">
-      <button onclick="app.clearEditor()" class="btn-danger" title="Limpar Editor (Ctrl+Alt+N)">
+      <button onclick="app.clearEditor()" class="btn-danger" title="Novo">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
         <span class="label">Novo</span>
       </button>
       <input type="file" id="fileInput" hidden accept=".txt,.md">
-      <button onclick="document.getElementById('fileInput').click()" title="Abrir Arquivo">
+      <button onclick="document.getElementById('fileInput').click()" title="Abrir">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       </button>
-      <button onclick="app.saveFile()" title="Baixar .txt (Ctrl+S)">
+      <button onclick="app.saveFile()" title="Baixar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
     </div>
 
-    <!-- Ferramentas Clínicas (NOVO) -->
+    <!-- Ferramentas Clínicas -->
     <div class="group">
-      <button onclick="app.insertDate()" title="Inserir Data e Hora Atual">
+      <button onclick="app.insertDate()" title="Inserir Data/Hora">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span class="label">Data/Hora</span>
-      </button>
-      
-      <!-- Botão de Ditado (Sò aparece se suportado) -->
-      <button id="btn-mic" onclick="app.toggleDictation()" title="Ditar (Voz para Texto)" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
       </button>
     </div>
 
     <!-- Edição -->
     <div class="group">
-      <button onclick="app.undo()" class="icon-only" title="Desfazer (Ctrl+Z)">
+      <button onclick="app.undo()" class="icon-only" title="Desfazer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
       </button>
-      <button onclick="app.redo()" class="icon-only" title="Refazer (Ctrl+Y)">
+      <button onclick="app.redo()" class="icon-only" title="Refazer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
       </button>
-       <button onclick="app.toggleCase()" title="Alternar Maiúsculas/Minúsculas">
+       <button onclick="app.toggleCase()" title="Maiúsculas/Minúsculas">
         <span style="font-weight: 700; font-size: 14px;">Aa</span>
       </button>
     </div>
 
     <!-- Principal -->
     <div class="group">
-      <button class="cta" onclick="app.copyToClipboard()" title="Copiar texto para colar no sistema">
+      <button class="cta" onclick="app.copyToClipboard()" title="Copiar texto">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         <span>COPIAR</span>
       </button>
     </div>
 
     <div class="group" style="border:none;">
-      <button onclick="app.openSnippets()" title="Gerenciar Modelos/Snippets">
+      <button onclick="app.openSnippets()" title="Modelos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         <span class="label">Modelos</span>
       </button>
@@ -272,12 +283,12 @@
 
     <div style="flex: 1;"></div>
     
-    <button onclick="app.openAbout()" title="Sobre e Ajuda">
+    <button onclick="app.openAbout()" title="Ajuda">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
       <span class="label">Sobre</span>
     </button>
     
-    <button onclick="app.toggleTheme()" id="btn-theme" title="Alternar Tema Escuro">
+    <button onclick="app.toggleTheme()" id="btn-theme" title="Tema Escuro">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
   </div>
@@ -290,12 +301,12 @@
   <!-- Status Bar -->
   <div id="status">
     <div class="status-item">
-      <span id="save-status">✓ Salvo no navegador</span>
+      <span id="save-status">✓ Salvo</span>
     </div>
     <div class="status-item">
       <span id="char-count">0 caracteres</span>
       <span style="color:var(--border);">|</span>
-      <span id="cursor-pos">Ln 1, Col 1</span>
+      <span id="cursor-pos">Ln 1</span>
     </div>
   </div>
 
@@ -312,7 +323,7 @@
         <span id="modal-title">Gerenciar Modelos</span>
         <div style="display:flex; gap: 8px;">
           <button id="btn-raw-json" class="btn-secondary" style="font-size:11px; padding: 4px 8px;" onclick="app.showJsonView()">
-            Importar/Exportar
+            JSON
           </button>
           <button onclick="app.closeModal('modal-snippets')" class="icon-only">✕</button>
         </div>
@@ -323,8 +334,8 @@
         <!-- LISTA -->
         <div id="view-list" class="view-container active">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <p class="helper-text" style="margin:0;">Digite o gatilho e pressione <strong>Tab</strong> para inserir.</p>
-            <button class="cta" onclick="app.createSnippet()">+ Novo Modelo</button>
+            <p class="helper-text" style="margin:0; font-size:12px;">Digite o atalho e pressione <strong>Tab</strong>.</p>
+            <button class="cta" style="font-size:12px; padding:6px 10px;" onclick="app.createSnippet()">+ Novo</button>
           </div>
           <ul id="snippet-list-ui" class="snippet-list"></ul>
         </div>
@@ -333,8 +344,8 @@
         <div id="view-edit" class="view-container">
           <div class="edit-grid">
             <div class="input-group">
-              <label>Nome do Modelo</label>
-              <input type="text" id="edit-name" placeholder="Ex: Exame Físico Normal">
+              <label>Nome</label>
+              <input type="text" id="edit-name" placeholder="Ex: Exame Normal">
             </div>
             <div class="input-group">
               <label>Gatilho (Atalho)</label>
@@ -343,7 +354,7 @@
           </div>
           
           <div class="input-group" style="flex:1; display:flex; flex-direction:column;">
-            <label>Conteúdo (Use ${1:texto} para criar campos de parada)</label>
+            <label>Conteúdo (Use ${1:texto} para cursor)</label>
             <textarea id="edit-content" class="code-editor" spellcheck="false"></textarea>
           </div>
 
@@ -361,7 +372,7 @@
           <textarea id="json-editor" class="code-editor" style="font-size:12px;"></textarea>
           <div style="margin-top: 15px; display:flex; justify-content:flex-end; gap: 10px;">
             <button class="btn-secondary" onclick="app.copyJson()">Copiar</button>
-            <button class="btn-secondary" onclick="app.showListView()">Cancelar</button>
+            <button class="btn-secondary" onclick="app.showListView()">Voltar</button>
             <button class="cta" onclick="app.saveJsonImport()">Aplicar</button>
           </div>
         </div>
@@ -374,29 +385,29 @@
   <div id="modal-about" class="modal-overlay">
     <div class="modal modal-md">
       <div class="modal-header">
-        <span>Sobre & Privacidade</span>
+        <span>Sobre</span>
         <button onclick="app.closeModal('modal-about')" class="icon-only">✕</button>
       </div>
       <div class="modal-body">
         <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
-          <strong style="color: var(--success); display:flex; align-items:center; gap:6px;">
+          <strong style="color: var(--success); display:flex; align-items:center; gap:6px; font-size:14px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             Ambiente Seguro
           </strong>
-          <p class="helper-text" style="margin-bottom:0; margin-top:5px;">
-            Ferramenta Offline: Nenhum dado do paciente sai do seu dispositivo. O texto é salvo apenas na memória temporária do seu navegador.
+          <p class="helper-text" style="margin-bottom:0; margin-top:5px; font-size:12px;">
+            Ferramenta 100% Offline. Os dados ficam apenas no navegador.
           </p>
         </div>
 
-        <h4>Teclas de Atalho</h4>
-        <ul style="font-size: 13px; color: var(--text-muted); line-height: 1.8;">
-          <li><code>Ctrl + S</code> : Baixar como texto (.txt)</li>
-          <li><code>Ctrl + Z / Y</code> : Desfazer / Refazer</li>
-          <li><code>Tab</code> : Expandir modelo ou pular para próximo campo</li>
-        </ul>
+        <h4 style="margin: 0 0 10px 0;">Teclas de Atalho</h4>
+        <p class="helper-text" style="margin-top:0;">
+            <code>Ctrl + S</code> : Baixar como texto (.txt)<br>
+            <code>Ctrl + Z / Y</code> : Desfazer / Refazer<br>
+            <code>Tab</code> : Expandir modelo ou pular para próximo campo<br>
+        </p>
 
-        <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
-          <h4 style="margin-bottom: 10px;">Preferências</h4>
+        <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
+          <h4 style="margin-bottom: 10px;">Configurações</h4>
           <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer;">
             <input type="checkbox" id="check-vim" onchange="app.toggleVim(this.checked)">
             Modo VIM (Edição Avançada)
@@ -422,19 +433,17 @@
       snippets: [],
       editingIndex: -1,
       saveTimer: null,
-      recognition: null,
-      isRecording: false,
       
       defaultSnippets: [
         {
           name: "SOAP Básico",
           trigger: "soap",
-          content: "S: ${1:Queixa principal e história...}\n\nO: ${2:Exame físico...}\n\nA: ${3:Hipóteses diagnósticas...}\n\nP: ${4:Conduta e orientações...}"
+          content: "S: ${1:Queixa principal...}\n\nO: ${2:Exame físico...}\n\nA: ${3:Hipóteses...}\n\nP: ${4:Conduta...}"
         },
         {
-          name: "Exame Físico Normal",
+          name: "Exame Normal",
           trigger: "efn",
-          content: "BEG, LOTE, corado, hidratado, anictérico, acianótico.\nACV: RCR em 2T, BNF, s/ sopros.\nAR: MV presente bilateralmente, s/ RA.\nABD: RHA presentes, flácido, indolor, s/ massas.\nMMII: Livres de edemas, panturrilhas livres."
+          content: "BEG, LOTE, corado, hidratado, anictérico, acianótico.\nACV: RCR em 2T, BNF, s/ sopros.\nAR: MV presente bilateralmente, s/ RA.\nABD: RHA +, flácido, indolor."
         }
       ],
 
@@ -443,7 +452,6 @@
         this.setupEditor();
         this.loadPreferences();
         this.setupEvents();
-        this.setupSpeech();
       },
 
       setupEditor: function() {
@@ -451,7 +459,7 @@
         this.editor.session.setMode("ace/mode/markdown");
         this.editor.setOptions({
           fontFamily: "'JetBrains Mono', 'Menlo', 'Consolas', monospace",
-          fontSize: "16px",
+          fontSize: "16px", // Bom tamanho para mobile
           wrap: true,
           showLineNumbers: true,
           showGutter: true,
@@ -461,9 +469,10 @@
           scrollPastEnd: 0.5,
           enableBasicAutocompletion: true,
           enableSnippets: true,
-          placeholder: "Digite a evolução do paciente aqui...\nUse 'soap' + Tab para iniciar um modelo." // Profissionalismo
+          placeholder: "Digite a evolução do paciente aqui...\nUse 'soap' + Tab para iniciar um modelo."
         });
         this.editor.container.style.lineHeight = "1.65";
+        this.editor.renderer.setScrollMargin(20, 15, 20, 15); 
       },
 
       setupEvents: function() {
@@ -480,7 +489,7 @@
         // Cursor Stats
         this.editor.selection.on('changeCursor', () => {
           const pos = this.editor.selection.getCursor();
-          document.getElementById('cursor-pos').innerText = `Ln ${pos.row + 1}, Col ${pos.column + 1}`;
+          document.getElementById('cursor-pos').innerText = `Ln ${pos.row + 1}`; // Simplificado para mobile
         });
 
         // Abrir Arquivo
@@ -511,44 +520,6 @@
         const now = new Date();
         const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
         this.editor.insert(dateStr + ' - ');
-        this.editor.focus();
-      },
-
-      setupSpeech: function() {
-        if ('webkitSpeechRecognition' in window) {
-          document.getElementById('btn-mic').style.display = 'flex';
-          this.recognition = new webkitSpeechRecognition();
-          this.recognition.lang = 'pt-BR';
-          this.recognition.continuous = true;
-          this.recognition.interimResults = false;
-
-          this.recognition.onresult = (event) => {
-            const transcript = event.results[event.results.length - 1][0].transcript;
-            this.editor.insert(transcript + " ");
-          };
-
-          this.recognition.onerror = () => {
-            this.toggleDictation(false); // Stop on error
-            this.toast("Erro no reconhecimento de voz");
-          };
-        }
-      },
-
-      toggleDictation: function(forceStop) {
-        if (!this.recognition) return;
-        const btn = document.getElementById('btn-mic');
-
-        if (this.isRecording || forceStop === false) {
-          this.recognition.stop();
-          this.isRecording = false;
-          btn.classList.remove('recording');
-          this.toast("Ditado Parado");
-        } else {
-          this.recognition.start();
-          this.isRecording = true;
-          btn.classList.add('recording');
-          this.toast("Ouvindo... (Fale agora)");
-        }
         this.editor.focus();
       },
 
@@ -605,7 +576,7 @@
 
       showListView: function() {
         this.switchView('view-list');
-        document.getElementById('modal-title').innerText = "Gerenciar Modelos";
+        document.getElementById('modal-title').innerText = "Modelos";
         document.getElementById('btn-raw-json').style.display = 'block';
         
         const list = document.getElementById('snippet-list-ui');
@@ -646,7 +617,6 @@
         document.getElementById('modal-title').innerText = "Novo Modelo";
         document.getElementById('btn-raw-json').style.display = 'none';
         this.switchView('view-edit');
-        document.getElementById('edit-name').focus();
       },
 
       editSnippet: function(index) {
@@ -667,7 +637,7 @@
         const content = document.getElementById('edit-content').value;
 
         if(!name || !trigger) {
-          alert("Nome e Gatilho são obrigatórios.");
+          alert("Preencha Nome e Gatilho.");
           return;
         }
 
@@ -697,7 +667,7 @@
 
       showJsonView: function() {
         document.getElementById('json-editor').value = JSON.stringify(this.snippets, null, 2);
-        document.getElementById('modal-title').innerText = "Importar/Exportar";
+        document.getElementById('modal-title').innerText = "JSON";
         document.getElementById('btn-raw-json').style.display = 'none';
         this.switchView('view-json');
       },
@@ -706,11 +676,11 @@
         try {
             const parsed = JSON.parse(document.getElementById('json-editor').value);
             if(!Array.isArray(parsed)) throw new Error("Formato inválido.");
-            if(confirm("Substituir todos os modelos atuais?")) {
+            if(confirm("Substituir todos os modelos?")) {
                 this.snippets = parsed;
                 this.persistSnippets();
                 this.showListView();
-                this.toast("Importado com sucesso!");
+                this.toast("Importado!");
             }
         } catch(e) {
             alert("Erro: " + e.message);
@@ -759,7 +729,6 @@
         const session = this.editor.getSession();
         const range = this.editor.getSelectionRange();
         if(range.isEmpty()) { 
-           // Melhora UX: se não tiver seleção, seleciona a palavra atual
            this.editor.selection.selectWord();
            if(this.editor.getSelectionRange().isEmpty()){
              this.toast("Selecione o texto"); return;
@@ -769,9 +738,9 @@
         const text = session.getTextRange(this.editor.getSelectionRange());
         let newText = "";
         
-        if (text === text.toLowerCase()) newText = text.replace(/\b\w/g, l => l.toUpperCase()); // Title
-        else if (text === text.toUpperCase()) newText = text.toLowerCase(); // Lower
-        else newText = text.toUpperCase(); // Upper
+        if (text === text.toLowerCase()) newText = text.replace(/\b\w/g, l => l.toUpperCase());
+        else if (text === text.toUpperCase()) newText = text.toLowerCase();
+        else newText = text.toUpperCase();
 
         session.replace(this.editor.getSelectionRange(), newText);
         this.editor.focus();
@@ -779,16 +748,16 @@
 
       clearEditor: function() {
         if(this.editor.getValue().length === 0) return;
-        if(confirm("Deseja iniciar um novo atendimento? (Isso limpará o texto atual)")) {
+        if(confirm("Limpar o editor?")) {
             this.editor.setValue("");
-            this.toast("Pronto para novo atendimento");
+            this.toast("Novo atendimento");
             this.editor.focus();
         }
       },
 
       saveFile: function() {
         const content = this.editor.getValue();
-        if(!content) { this.toast("Editor vazio"); return; }
+        if(!content) { this.toast("Vazio"); return; }
         const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
         const a = document.createElement("a");
         const d = new Date();
@@ -803,13 +772,11 @@
         if(!val) { this.toast("Nada para copiar"); return; }
         
         const success = () => {
-             this.toast("Copiado com sucesso!");
-             // Feedback visual no botão
+             this.toast("Copiado!");
              const btn = document.querySelector('button.cta');
              const originalHTML = btn.innerHTML;
-             btn.innerHTML = "<span>COPIADO! ✓</span>";
+             btn.innerHTML = "<span>OK!</span>";
              btn.style.background = "var(--success)";
-             
              setTimeout(() => {
                  btn.innerHTML = originalHTML;
                  btn.style.background = "";
