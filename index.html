@@ -10,300 +10,319 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <!-- Adicionado interactive-widget para melhor comportamento com teclado virtual -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-  <title>Editor Clínico Mobile</title>
+  <title>Editor Clínico Pro</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      /* --- Cores --- */
-      --bg-app: #f1f5f9;
-      --bg-surface: #ffffff;
-      --bg-gutter: #f8fafc;
-      --border: #cbd5e1;
-      
-      --text-main: #334155;
-      --text-muted: #64748b;
-      
-      --primary: #0ea5e9;
-      --primary-hover: #0284c7;
-      --primary-fg: #ffffff;
-      
-      --danger: #ef4444;
-      --success: #10b981;
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-      --btn-hover: #e2e8f0;
-      --btn-active-bg: #e0f2fe;
-      --btn-active-fg: #0369a1;
-
-      --sb-track: #f1f5f9;
-      --sb-thumb: #cbd5e1;
-
-      --overlay-bg: rgba(15, 23, 42, 0.6);
-    }
-
-    body.dark-mode {
-      --bg-app: #0f172a;
-      --bg-surface: #1e293b;
-      --bg-gutter: #1e293b;
-      --border: #334155;
-      
-      --text-main: #e2e8f0;
-      --text-muted: #94a3b8;
-      
-      --primary: #38bdf8;
-      --primary-hover: #0ea5e9;
-      --primary-fg: #0f172a;
-      
-      --btn-hover: #334155;
-      --btn-active-bg: #1e40af;
-      --btn-active-fg: #93c5fd;
-
-      --sb-track: #1e293b;
-      --sb-thumb: #475569;
-    }
-
-    /* --- Reset & Layout --- */
-    * { box-sizing: border-box; }
-    body { 
-      margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-      font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main);
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* --- Scrollbar --- */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--sb-track); }
-    ::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 4px; }
-
-    /* --- Toolbar (Mobile Optimized) --- */
-    #toolbar {
-      height: 60px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px;
-      background: var(--bg-surface); border-bottom: 1px solid var(--border); user-select: none;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05); z-index: 10;
-      overflow-x: auto; /* Rolagem horizontal no mobile */
-      -webkit-overflow-scrolling: touch;
-      white-space: nowrap; /* Impede quebra de linha */
-    }
-    
-    /* Esconder scrollbar da toolbar mas manter funcionalidade */
-    #toolbar::-webkit-scrollbar { height: 0px; display: none; }
-
-    .group { display: flex; gap: 4px; padding-right: 12px; margin-right: 12px; border-right: 1px solid var(--border); align-items: center; }
-    .group:last-child { border: none; padding-right: 0; margin-right: 0; }
-
-    button {
-      background: transparent; border: 1px solid transparent; color: var(--text-main);
-      padding: 8px 12px; border-radius: 8px; cursor: pointer;
-      font-size: 13px; font-weight: 500; font-family: inherit;
-      display: flex; align-items: center; justify-content: center; gap: 6px; 
-      transition: all 0.2s; flex-shrink: 0; /* Impede botões de esmagarem */
-      min-height: 40px; /* Área de toque melhorada */
-    }
-    button:hover { background: var(--btn-hover); }
-    button:active { transform: translateY(1px); }
-    
-    button.cta { 
-      background: var(--primary); color: var(--primary-fg); 
-      font-weight: 600; padding: 8px 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    button.cta:hover { background: var(--primary-hover); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
-    
-    button.icon-only { padding: 8px; width: 40px; }
-    button svg { width: 20px; height: 20px; stroke-width: 2px; }
-
-    /* Responsividade dos Labels */
-    .label { display: none; }
-    @media(min-width: 768px) { 
-      .label { display: inline-block; } 
-      button { padding: 8px 10px; min-height: auto; }
-      button.icon-only { width: auto; padding: 8px; }
-      #toolbar { height: 56px; overflow-x: visible; }
-    }
-
-    /* --- Editor --- */
-    #editor-wrapper { flex: 1; display: flex; justify-content: center; background: var(--bg-app); padding: 16px; position: relative; overflow: hidden; }
-    @media(max-width: 768px) { #editor-wrapper { padding: 8px; } }
-
-    #editor { 
-      width: 100%; max-width: 1024px; height: 100%; 
-      background: var(--bg-surface); border: 1px solid var(--border); 
-      border-radius: 8px; box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1);
-    }
-    
-    .ace_placeholder { font-family: 'JetBrains Mono', monospace !important; color: var(--text-muted) !important; opacity: 0.5; padding: 0 4px; }
-    .ace_editor { font-family: 'JetBrains Mono', monospace !important; }
-    .ace_gutter { background: var(--bg-gutter) !important; color: var(--text-muted) !important; border-right: 1px solid var(--border); }
-    .ace_print-margin { display: none !important; } 
-
-    /* --- CORREÇÕES VISUAIS PARA MODO ESCURO (ACE EDITOR) --- */
-    
-    /* 1. Melhora a cor do número da linha ativa no Gutter */
-    body.dark-mode .ace_gutter-active-line {
-      background-color: #334155 !important; /* Azul ardósia sutil */
-      color: #ffffff !important; /* Número em branco */
-    }
-
-    /* 2. Melhora a cor da seleção de texto (tira o cinza feio) */
-    body.dark-mode .ace_marker-layer .ace_selection {
-      background: rgba(56, 189, 248, 0.25) !important; /* Azul da sua marca com transparência */
-      border: 1px solid rgba(56, 189, 248, 0.1);
-    }
-
-/* --- CUSTOMIZAÇÃO DO CURSOR VIM --- */
-
-    /* === MODO CLARO (Default) === */
-
-    /* 1. Normal Mode (Bloco Sólido) */
-    .ace_editor.normal-mode .ace_cursor {
-      background-color: rgba(14, 165, 233, 0.5) !important; /* Azul translúcido */
-      border: none !important;
-    }
-    /* 2. Cursores Ocultos/Seleção (Bloco Oco) */
-    .ace_editor.normal-mode .ace_hidden-cursors .ace_cursor {
-      background-color: transparent !important;
-      border: 1px solid #0ea5e9 !important;
-    }
-
-    /* === MODO ESCURO === */
-
-    /* 1. Normal Mode (Bloco Neon) */
-    body.dark-mode .ace_editor.normal-mode .ace_cursor {
-      background-color: rgba(56, 189, 248, 0.5) !important;
-      border: none !important;
-    }
-    /* 2. Cursores Ocultos/Seleção (Bloco Oco Neon) */
-    body.dark-mode .ace_editor.normal-mode .ace_hidden-cursors .ace_cursor {
-      background-color: transparent !important;
-      border: 1px solid #38bdf8 !important;
-    }
-
-    /* --- Status Bar --- */
-    #status {
-      height: 32px; background: var(--bg-surface); color: var(--text-muted); border-top: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center; padding: 0 16px;
-      font-size: 11px; font-weight: 500; flex-shrink: 0;
-    }
-    .status-item { display: flex; align-items: center; gap: 6px; }
-    #save-status { color: var(--success); font-weight: 600; opacity: 0; transition: opacity 0.5s; }
-
-    /* --- Toast --- */
-    #toast {
-      position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
-      background: #1e293b; color: #fff; padding: 10px 20px; border-radius: 30px;
-      font-size: 14px; font-weight: 500; opacity: 0; visibility: hidden; 
-      z-index: 2001; 
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      display: flex; align-items: center; gap: 8px; width: max-content; max-width: 90%;
-    }
-    #toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
-
-    /* --- Modals (Mobile Friendly) --- */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--overlay-bg); backdrop-filter: blur(2px);
-      z-index: 1000; display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden; transition: opacity 0.2s; padding: 10px;
-    }
-    .modal-overlay.open { opacity: 1; visibility: visible; }
-    
-    .modal {
-      background: var(--bg-surface); 
-      border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-      display: flex; flex-direction: column; overflow: hidden;
-      border: 1px solid var(--border); transform: scale(0.95); transition: transform 0.2s;
-      width: 100%; max-height: 90vh;
-    }
-    .modal-overlay.open .modal { transform: scale(1); }
-
-    .modal-md { max-width: 550px; }
-    .modal-lg { max-width: 700px; height: 80vh; }
-
-    .modal-header {
-      padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--bg-gutter);
-      font-weight: 600; font-size: 15px; display: flex; justify-content: space-between; align-items: center;
-    }
-    .modal-body { padding: 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .modal-footer {
-      padding: 14px 20px; border-top: 1px solid var(--border); background: var(--bg-gutter);
-      display: flex; justify-content: flex-end; gap: 10px;
-    }
-
-    /* --- Snippet Manager UI --- */
-    .view-container { flex: 1; display: none; flex-direction: column; }
-    .view-container.active { display: flex; }
-
-    .snippet-list { list-style: none; padding: 0; margin: 0; }
-    .snippet-item { 
-      padding: 14px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px;
-      display: flex; justify-content: space-between; align-items: center;
-      background: var(--bg-surface); transition: all 0.2s;
-    }
-    .snippet-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    .snippet-info b { display: block; font-size: 14px; margin-bottom: 4px; }
-    .snippet-info span { 
-      font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; 
-      background: var(--bg-gutter); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border);
-    }
-    .snippet-actions { display: flex; gap: 8px; }
-
-    .edit-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px; }
-    @media(max-width: 600px) { .edit-grid { grid-template-columns: 1fr; gap: 10px; } }
-
-    .input-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted); }
-    .input-group input {
-      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;
-      background: var(--bg-app); color: var(--text-main); font-size: 14px;
-    }
-    .code-editor {
-      flex: 1; width: 100%; padding: 15px; 
-      border: 1px solid var(--border); border-radius: 6px;
-      background: var(--bg-app); color: var(--text-main);
-      font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5;
-      resize: none; outline: none; min-height: 150px;
-    }
-    .code-editor:focus { border-color: var(--primary); background: var(--bg-surface); }
-    .btn-secondary { background: var(--bg-surface); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--bg-gutter); }
-    .btn-danger { color: var(--danger); border-color: transparent; }
-    .btn-danger:hover { background: #fef2f2; color: #dc2626; }
-    .helper-text { font-size: 13px; line-height: 1.6; color: var(--text-muted); }
-  </style>
 </head>
+<style>
+:root {
+  /* --- Cores --- */
+  --bg-app: #f1f5f9;      /* Fundo da "mesa" */
+  --bg-surface: #ffffff;  /* Fundo da "folha" e Menus */
+  --bg-gutter: #f8fafc;
+  --border: #cbd5e1;
+  
+  --text-main: #334155;
+  --text-muted: #64748b;
+  
+  --primary: #0ea5e9;
+  --primary-hover: #0284c7;
+  --primary-fg: #ffffff;
+  
+  --danger: #ef4444;
+  --success: #10b981;
+
+  --btn-hover: #e2e8f0;
+  --btn-active-bg: #e0f2fe;
+  --btn-active-fg: #0369a1;
+
+  --sb-track: #f1f5f9;
+  --sb-thumb: #cbd5e1;
+
+  --overlay-bg: rgba(15, 23, 42, 0.6);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+}
+
+body.dark-mode {
+  --bg-app: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-gutter: #1e293b;
+  --border: #334155;
+  
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  
+  --primary: #38bdf8;
+  --primary-hover: #0ea5e9;
+  --primary-fg: #0f172a;
+  
+  --btn-hover: #334155;
+  --btn-active-bg: #1e40af;
+  --btn-active-fg: #93c5fd;
+
+  --sb-track: #1e293b;
+  --sb-thumb: #475569;
+}
+
+/* --- Reset & Layout --- */
+* { box-sizing: border-box; }
+body { 
+  margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  font-family: 'Inter', sans-serif; background: var(--bg-app); color: var(--text-main);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* --- Layout Principal (Flex Row para Editor + Sidebar) --- */
+#main-layout {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  height: calc(100vh - 56px - 28px);
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--sb-track); }
+::-webkit-scrollbar-thumb { background: var(--sb-thumb); border-radius: 4px; }
+
+/* --- Toolbar --- */
+#toolbar {
+  height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 16px;
+  background: var(--bg-surface); border-bottom: 1px solid var(--border); user-select: none;
+  box-shadow: var(--shadow-sm); z-index: 20;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+#toolbar::-webkit-scrollbar { height: 0px; display: none; }
+
+/* Branding (Menu Trigger) */
+.brand {
+  font-weight: 700; font-size: 15px; color: var(--primary);
+  margin-right: 12px; padding-right: 12px; border-right: 1px solid var(--border);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: color 0.2s; white-space: nowrap;
+}
+.brand:hover { color: var(--primary-hover); }
+.brand svg { width: 18px; height: 18px; }
+.brand .chevron { width: 14px; height: 14px; stroke-width: 3px; opacity: 0.7; }
+
+/* --- Dropdown Menu (Substitui o Modal Sobre) --- */
+.dropdown-menu {
+  position: fixed; /* Fixed para não ser cortado pelo overflow da toolbar */
+  top: 50px; left: 10px;
+  width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px 0;
+  z-index: 100;
+  display: none; /* JS controla a visibilidade */
+  flex-direction: column;
+}
+.dropdown-menu.show { display: flex; animation: slideDown 0.15s ease-out; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menu-header {
+  padding: 8px 16px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.menu-item {
+  padding: 10px 16px; display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: var(--text-main); cursor: pointer; user-select: none;
+  
+}
+.menu-item:hover { background: var(--bg-gutter); }
+.menu-item input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
+
+.menu-divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+.menu-footer {
+  padding: 8px 16px; font-size: 11px; color: var(--text-muted); line-height: 1.4;
+  text-align: center; background: var(--bg-gutter); border-top: 1px solid var(--border); margin-top: 4px;
+}
+
+/* --- Botões da Toolbar --- */
+.group { display: flex; gap: 4px; padding-right: 12px; margin-right: 12px; border-right: 1px solid var(--border); align-items: center; }
+.group:last-child { border: none; padding-right: 0; margin-right: 0; }
+
+button {
+  background: transparent; border: 1px solid transparent; color: var(--text-main);
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 6px; 
+  transition: all 0.2s; flex-shrink: 0; min-height: 36px; white-space: nowrap;
+}
+button:hover { background: var(--btn-hover); }
+button:active { transform: translateY(1px); }
+button.active { background: var(--btn-active-bg); color: var(--btn-active-fg); }
+
+button.cta { 
+  background: var(--primary); color: var(--primary-fg); 
+  font-weight: 600; padding: 6px 16px; margin-left: 8px;
+  box-shadow: var(--shadow-md);
+}
+button.cta:hover { background: var(--primary-hover); box-shadow: var(--shadow-lg); }
+
+button.icon-only { padding: 8px; width: 36px; }
+button svg { width: 18px; height: 18px; stroke-width: 2px; }
+
+/* Labels Responsivos */
+.label { display: none; }
+@media(min-width: 768px) { .label { display: inline-block; } }
+
+/* --- Editor Wrapper (A "Mesa") --- */
+#editor-wrapper { 
+  flex: 1; display: flex; justify-content: center; 
+  background: var(--bg-app); padding: 20px; 
+  position: relative; overflow: hidden; min-width: 0;
+}
+@media(max-width: 768px) { #editor-wrapper { padding: 0; } }
+
+/* --- Editor Box (A "Folha") --- */
+#editor { 
+  width: 100%; max-width: 900px; height: 100%; 
+  background: var(--bg-surface); border: 1px solid var(--border); 
+  border-radius: 8px; box-shadow: var(--shadow-md);
+}
+@media(max-width: 768px) { 
+  #editor { max-width: 100%; border-radius: 0; border: none; border-bottom: 1px solid var(--border); box-shadow: none; } 
+}
+
+/* Ace Styles */
+.ace_placeholder { font-family: 'JetBrains Mono', monospace !important; color: var(--text-muted) !important; opacity: 0.5; }
+.ace_editor { font-family: 'JetBrains Mono', monospace !important; }
+.ace_gutter { background: var(--bg-gutter) !important; color: var(--text-muted) !important; border-right: 1px solid var(--border); }
+.ace_print-margin { display: none !important; } 
+
+body.dark-mode .ace_gutter-active-line { background-color: #334155 !important; color: #ffffff !important; }
+body.dark-mode .ace_marker-layer .ace_selection { background: rgba(56, 189, 248, 0.25) !important; border: 1px solid rgba(56, 189, 248, 0.1); }
+.ace_editor.normal-mode .ace_cursor { background-color: rgba(14, 165, 233, 0.5) !important; border: none !important; }
+
+/* --- Sidebar (Direita) --- */
+#sidebar {
+  width: 0; background: var(--bg-surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden; z-index: 30; box-shadow: -5px 0 15px rgba(0,0,0,0.02);
+}
+#sidebar.open { width: 340px; }
+
+@media(max-width: 600px) {
+  #sidebar { position: absolute; right: 0; top: 0; height: 100%; width: 0; transition: width 0.3s; }
+  #sidebar.open { width: 85%; box-shadow: -10px 0 30px rgba(0,0,0,0.2); }
+}
+
+.sidebar-header {
+  height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; border-bottom: 1px solid var(--border); background: var(--bg-gutter);
+  font-weight: 600; font-size: 14px;
+}
+.sidebar-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
+
+/* --- Status Bar --- */
+#status {
+  height: 28px; background: var(--bg-surface); color: var(--text-muted); border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center; padding: 0 16px;
+  font-size: 11px; font-weight: 500; flex-shrink: 0; z-index: 40;
+}
+
+/* --- Snippets Styles --- */
+.view-container { flex: 1; display: none; flex-direction: column; }
+.view-container.active { display: flex; }
+.snippet-list { list-style: none; padding: 0; margin: 0; }
+.snippet-item { 
+  padding: 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px;
+  display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); 
+  transition: all 0.2s; cursor: pointer;
+}
+.snippet-item:hover { border-color: var(--primary); transform: translateX(2px); }
+.snippet-info b { display: block; font-size: 13px; margin-bottom: 2px; }
+.snippet-info span { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; background: var(--bg-gutter); padding: 2px 4px; border-radius: 3px; }
+.snippet-actions { display: flex; gap: 4px; }
+.snippet-actions button { min-height: 28px; width: 28px; padding: 0; }
+.edit-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+.input-group label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 4px; color: var(--text-muted); }
+.input-group input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-app); color: var(--text-main); font-size: 13px; }
+.code-editor {
+  flex: 1; width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg-app); color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4;
+  resize: none; outline: none; min-height: 200px;
+}
+.code-editor:focus { border-color: var(--primary); background: var(--bg-surface); }
+
+/* --- Toast --- */
+#toast {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%) translateY(-20px);
+  background: #1e293b; color: #fff; padding: 8px 16px; border-radius: 20px;
+  font-size: 13px; font-weight: 500; opacity: 0; visibility: hidden; 
+  z-index: 2001; box-shadow: var(--shadow-lg); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+</style>
 <body>
+
+  <!-- Menu Dropdown (Antigo Modal Sobre) -->
+  <div id="app-menu" class="dropdown-menu">
+    <div class="menu-header">Configurações</div>
+    
+    <label class="menu-item">
+      <input type="checkbox" id="check-theme" onchange="app.toggleTheme()">
+      <span>Modo Escuro</span>
+    </label>
+
+    <label class="menu-item">
+      <input type="checkbox" id="check-vim" onchange="app.toggleVim(this.checked)">
+      <span>Modo VIM (Edição Avançada)</span>
+    </label>
+
+    <label class="menu-item">
+      <input type="checkbox" id="check-commands" onchange="app.toggleCommandPalette(this.checked)">
+      <span>Comandos (F1 / Ctrl+Shift+P)</span>
+    </label>
+
+    <div class="menu-footer">
+      <strong>Editor Clínico Lite v1.2</strong><br>
+      Offline & Seguro • <a href="https://ace.c9.io/" target="_blank" style="color:inherit">Ace Editor</a><br>
+      © 2025 Sidney Alves Crestani Jr.
+    </div>
+  </div>
 
   <!-- Toolbar -->
   <div id="toolbar">
-    <!-- Arquivo -->
+    <!-- 1. Branding com Dropdown -->
+    <div id="brand-trigger" class="brand" onclick="app.toggleMenu(event)" title="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      <span>Editor Clínico</span>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- 2. Arquivo -->
     <div class="group">
-      <button onclick="app.clearEditor()" class="btn-danger" title="Novo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        <span class="label">Novo</span>
+      <button onclick="app.clearEditor()" title="Novo" class="icon-only">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
       </button>
       <input type="file" id="fileInput" hidden accept=".txt,.md">
-      <button onclick="document.getElementById('fileInput').click()" title="Abrir">
+      <button onclick="document.getElementById('fileInput').click()" title="Abrir" class="icon-only">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       </button>
-      <button onclick="app.saveFile()" title="Baixar">
+      <button onclick="app.saveFile()" title="Baixar" class="icon-only">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
     </div>
 
-    <!-- Ferramentas Clínicas -->
-    <div class="group">
-      <button onclick="app.insertDate()" title="Inserir Data/Hora">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span class="label">Data/Hora</span>
-      </button>
-    </div>
-
-    <!-- Edição -->
+    <!-- 3. Undo/Redo & Ferramentas -->
     <div class="group">
       <button onclick="app.undo()" class="icon-only" title="Desfazer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
@@ -311,584 +330,496 @@
       <button onclick="app.redo()" class="icon-only" title="Refazer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
       </button>
-       <button onclick="app.toggleCase()" title="Maiúsculas/Minúsculas">
+      <button onclick="app.insertDate()" title="Inserir Data" class="icon-only">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </button>
+      <button onclick="app.toggleCase()" title="Maiúsculas/Minúsculas">
         <span style="font-weight: 700; font-size: 14px;">Aa</span>
       </button>
     </div>
 
-    <!-- Principal -->
-    <div class="group">
-      <button class="cta" onclick="app.copyToClipboard()" title="Copiar texto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        <span>COPIAR</span>
-      </button>
-    </div>
+    <!-- Spacer -->
+    <div style="flex:1;"></div>
 
-    <div class="group" style="border:none;">
-      <button onclick="app.openSnippets()" title="Modelos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span class="label">Modelos</span>
-      </button>
-    </div>
-
-    <div style="flex: 1;"></div>
-    
-    <button onclick="app.openAbout()" title="Ajuda">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      <span class="label">Sobre</span>
+    <!-- 4. Ícone Modelos -->
+    <button id="btn-sidebar-toggle" class="icon-only" onclick="app.toggleSidebar()" title="Modelos (Snippets)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
     </button>
-    
-    <button onclick="app.toggleTheme()" id="btn-theme" title="Tema Escuro">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+
+    <!-- 5. Botão Copiar -->
+    <button class="cta" onclick="app.copyToClipboard()" title="Copiar Texto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      <span class="label">COPIAR</span>
     </button>
   </div>
 
-  <!-- Editor -->
-  <div id="editor-wrapper">
-    <div id="editor"></div>
-  </div>
-
-  <!-- Status Bar -->
-  <div id="status">
-    <div class="status-item">
-      <span id="save-status">✓ Salvo</span>
+  <!-- Layout Principal -->
+  <div id="main-layout">
+    
+    <div id="editor-wrapper">
+      <div id="editor"></div>
     </div>
-    <div class="status-item">
-      <span id="char-count">0 caracteres</span>
-      <span style="color:var(--border);">|</span>
-      <span id="cursor-pos">Ln 1</span>
-    </div>
-  </div>
 
-  <!-- Toast -->
-  <div id="toast">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-    <span id="toast-msg">Notificação</span>
-  </div>
-
-  <!-- Modal: Snippets -->
-  <div id="modal-snippets" class="modal-overlay">
-    <div class="modal modal-lg">
-      <div class="modal-header">
-        <span id="modal-title">Gerenciar Modelos</span>
-        <div style="display:flex; gap: 8px;">
-          <button id="btn-raw-json" class="btn-secondary" style="font-size:11px; padding: 4px 8px;" onclick="app.showJsonView()">
-            JSON
-          </button>
-          <button onclick="app.closeModal('modal-snippets')" class="icon-only">✕</button>
+    <!-- Sidebar (Direita) -->
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <span id="sidebar-title">Modelos</span>
+        <div style="display: flex; gap: 5px;">
+           <button class="icon-only" onclick="app.showJsonView()" title="JSON Import/Export">
+             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+           </button>
+           <button class="icon-only" onclick="app.toggleSidebar()" title="Fechar">✕</button>
         </div>
       </div>
       
-      <div class="modal-body">
-        
-        <!-- LISTA -->
+      <div class="sidebar-content">
+        <!-- Views da Sidebar (Lista, Edição, JSON) -->
         <div id="view-list" class="view-container active">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <p class="helper-text" style="margin:0; font-size:12px;">Digite o atalho e pressione <strong>Tab</strong>.</p>
-            <button class="cta" style="font-size:12px; padding:6px 10px;" onclick="app.createSnippet()">+ Novo</button>
-          </div>
-          <ul id="snippet-list-ui" class="snippet-list"></ul>
+           <button class="cta" style="width:100%; margin-bottom:10px; margin-left:0; justify-content:center;" onclick="app.createSnippet()">+ Criar Novo</button>
+           <p class="helper-text" style="font-size:11px; margin-bottom:10px;">
+             Clique para inserir ou digite o atalho + <strong>Tab</strong>.
+           </p>
+           <ul id="snippet-list-ui" class="snippet-list"></ul>
         </div>
 
-        <!-- EDITOR -->
         <div id="view-edit" class="view-container">
           <div class="edit-grid">
             <div class="input-group">
               <label>Nome</label>
-              <input type="text" id="edit-name" placeholder="Ex: Exame Normal">
+              <input type="text" id="edit-name">
             </div>
             <div class="input-group">
-              <label>Gatilho (Atalho)</label>
-              <input type="text" id="edit-trigger" placeholder="Ex: efn">
+              <label>Atalho (Gatilho)</label>
+              <input type="text" id="edit-trigger">
             </div>
           </div>
-          
           <div class="input-group" style="flex:1; display:flex; flex-direction:column;">
-            <label>Conteúdo (Use ${1:texto} para cursor)</label>
+            <label>Conteúdo (${1:foco})</label>
             <textarea id="edit-content" class="code-editor" spellcheck="false"></textarea>
           </div>
-
-          <div style="margin-top: 15px; display:flex; justify-content:flex-end; gap: 10px;">
-            <button class="btn-secondary" onclick="app.showListView()">Cancelar</button>
-            <button class="cta" onclick="app.saveCurrentSnippet()">Salvar</button>
+          <div style="margin-top: 10px; display:flex; gap: 8px;">
+            <button style="flex:1;" onclick="app.showListView()">Cancelar</button>
+            <button style="flex:1; margin-left:0;" class="cta" onclick="app.saveCurrentSnippet()">Salvar</button>
           </div>
         </div>
 
-        <!-- JSON -->
         <div id="view-json" class="view-container">
-          <p class="helper-text" style="margin-bottom:10px;">
-            Backup ou Transferência de modelos.
-          </p>
-          <textarea id="json-editor" class="code-editor" style="font-size:12px;"></textarea>
-          <div style="margin-top: 15px; display:flex; justify-content:flex-end; gap: 10px;">
-            <button class="btn-secondary" onclick="app.copyJson()">Copiar</button>
-            <button class="btn-secondary" onclick="app.showListView()">Voltar</button>
-            <button class="cta" onclick="app.saveJsonImport()">Aplicar</button>
-          </div>
+           <p class="helper-text">Copie para backup ou cole para importar.</p>
+           <textarea id="json-editor" class="code-editor" style="height: 300px;"></textarea>
+           <div style="margin-top: 10px; display:flex; gap: 8px; flex-wrap:wrap;">
+             <button style="flex:1;" onclick="app.copyJson()">Copiar</button>
+             <button style="flex:1; margin-left:0;" class="cta" onclick="app.saveJsonImport()">Importar</button>
+           </div>
+           <button style="width:100%; margin-top:8px;" onclick="app.showListView()">Voltar</button>
         </div>
-
       </div>
     </div>
   </div>
 
-<!-- Modal: Sobre -->
-  <div id="modal-about" class="modal-overlay">
-    <div class="modal modal-md">
-      <div class="modal-header">
-        <span>Sobre</span>
-        <button onclick="app.closeModal('modal-about')" class="icon-only">✕</button>
-      </div>
-      <div class="modal-body">
-        
-        <!-- Aviso de Segurança -->
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
-          <strong style="color: var(--success); display:flex; align-items:center; gap:6px; font-size:14px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Ambiente Seguro
-          </strong>
-          <p class="helper-text" style="margin-bottom:0; margin-top:5px; font-size:12px;">
-            Ferramenta 100% Offline. Os dados ficam apenas no seu navegador.
-          </p>
-        </div>
-
-        <!-- Atalhos -->
-        <h4 style="margin: 0 0 10px 0;">Teclas de Atalho</h4>
-        <p class="helper-text" style="margin-top:0;">
-            <code>Ctrl + S</code> : Baixar como texto (.txt)<br>
-            <code>Ctrl + Z / Y</code> : Desfazer / Refazer<br>
-            <code>Tab</code> : Expandir modelo ou pular campo<br>
-        </p>
-
-        <!-- Configurações -->
-        <div style="margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px;">
-          <h4 style="margin-bottom: 10px;">Configurações</h4>
-          <label style="display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer;">
-            <input type="checkbox" id="check-vim" onchange="app.toggleVim(this.checked)">
-            Modo VIM (Edição Avançada)
-          </label>
-        </div>
-      </div>
-
-      <!-- Footer OTIMIZADO: Créditos à esquerda, botão à direita -->
-      <div class="modal-footer" style="justify-content: space-between; align-items: center;">
-        <div style="font-size: 10px; color: var(--text-muted); line-height: 1.3;">
-          <strong>Editor Clínico Lite v1.0</strong> • Licença MIT<br>
-          Powered by <a href="https://ace.c9.io/" target="_blank" style="color: inherit; text-decoration: underline;">Ace Editor</a>
-        </div>
-        <button onclick="app.closeModal('modal-about')">Fechar</button>
-      </div>
+  <div id="status">
+    <div class="status-item">
+      <span id="save-status" style="color:var(--success); opacity:0; transition:opacity 0.5s">✓ Salvo</span>
+    </div>
+    <div class="status-item" style="display:flex; gap:10px;">
+      <span id="char-count">0 chars</span>
+      <span id="cursor-pos">Ln 1</span>
     </div>
   </div>
 
-  <!-- Libs -->
+  <div id="toast"><span id="toast-msg">Notificação</span></div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ace.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/ext-language_tools.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/keybinding-vim.min.js"></script>
-
   <script>
-    ace.config.set("basePath", "https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/");
+  ace.config.set("basePath", "https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.14/");
 
-    const app = {
-      editor: null,
-      snippets: [],
-      editingIndex: -1,
-      saveTimer: null,
-      
-      defaultSnippets: [
-        {
-          name: "SOAP Básico",
-          trigger: "soap",
-          content: "S: # QP/HDA: ${1:Paciente refere...}\n   # HPP: ${2:Nega HAS, DM ou comorbidades}\n   # MEDS: ${3:Nega uso contínuo}\n   # ALERGIAS: ${4:Nega}\n\nO: BEG, LOTE, Corado, Hidratado, Anictérico.\n   > Sinais: PA ${5:120x80} mmHg | FC ${6:72} bpm | Sat ${7:98}% (AA)\n   > AR: ${8:MV+ s/ RA, eupneico}\n   > ACV: ${9:RCR 2T BNF s/ sopros}\n   > ABD: ${10:Flácido, indolor, RHA+}\n   > EXT: ${11:S/ edema, panturrilhas livres}\n\nA: # HD: ${12:}\n   # CID: ${13:}\n\nP: 1. Conduta: ${14:Orientações e Sinais de alarme}\n   2. Prescrição: ${15:Segue receita}\n   3. Exames: ${16:Não solicitados}"
-        },
-        {
-          name: "Exame Normal",
-          trigger: "efn",
-          content: "BEG, LOTE, corado, hidratado, anictérico, acianótico.\nACV: RCR em 2T, BNF, s/ sopros.\nAR: MV presente bilateralmente, s/ RA.\nABD: RHA +, flácido, indolor."
-        }
-      ],
+const app = {
+  editor: null,
+  snippets: [],
+  editingIndex: -1,
+  saveTimer: null,
+  isSidebarOpen: false,
+  
+  defaultSnippets: [
+    { name: "SOAP Padrão", trigger: "soap", content: "S: ${1:Queixas}\nO: ${2:Exame Físico}\nA: ${3:Hipóteses}\nP: ${4:Conduta}" },
+    { name: "Exame Normal", trigger: "efn", content: "BEG, LOTE, Corado, Hidratado, Anictérico, Acianótico.\nAR: MV+ s/ RA.\nACV: RCR 2T BNF s/ sopros.\nABD: Flácido, indolor, RHA+." }
+  ],
 
-      init: function() {
-        this.editor = ace.edit("editor");
-        this.setupEditor();
-        this.loadPreferences();
-        this.setupEvents();
-      },
+  init: function() {
+    this.editor = ace.edit("editor");
+    this.setupEditor();
+    this.loadPreferences();
+    this.setupEvents();
+    if(window.innerWidth > 768 && localStorage.getItem('med_editor_sidebar') === 'true') {
+      this.toggleSidebar(true);
+    }
+  },
 
-      setupEditor: function() {
-        this.editor.setTheme("ace/theme/chrome");
-        this.editor.session.setMode("ace/mode/markdown");
-        this.editor.setOptions({
-          fontFamily: "'JetBrains Mono', 'Menlo', 'Consolas', monospace",
-          fontSize: "16px", // Bom tamanho para mobile
-          wrap: true,
-          showLineNumbers: false,
-          showGutter: true,
-          highlightActiveLine: false,
-          printMargin: false,
-          displayIndentGuides: false,
-          scrollPastEnd: 0.5,
-		  // --- AUTOCOMPLETAR ---
-          enableBasicAutocompletion: true, // Necessário
-          enableLiveAutocompletion: false,  // Abre o popup automaticamente ao digitar
-          enableSnippets: true,            // Seus modelos (SOAP, etc)
-          placeholder: "Digite a evolução do paciente aqui...\nUse 'soap' + Tab para iniciar um modelo."
-        });
+  setupEditor: function() {
+    this.editor.setTheme("ace/theme/chrome");
+    this.editor.session.setMode("ace/mode/markdown");
+    this.editor.setOptions({
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: "15px",
+      wrap: true,
+      showLineNumbers: false,
+      showGutter: true,
+      highlightActiveLine: false,
+      displayIndentGuides: false,
+      scrollPastEnd: 0.5,
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: false,
+      enableSnippets: true,
+      placeholder: "Digite aqui... (Use 'soap' + Tab)"
+    });
+    this.editor.renderer.setScrollMargin(20, 15, 20, 15); 
+    this.editor.commands.removeCommand("showSettingsMenu");
+    this.editor.commands.removeCommand("openCommandPallete");
+    this.editor.commands.removeCommand("gotoline"); 
+  },
 
-        this.editor.container.style.lineHeight = "1.65";
-        this.editor.renderer.setScrollMargin(20, 15, 20, 15); 
-        // Remove o menu de configurações (Ctrl + ,)
-        this.editor.commands.removeCommand("showSettingsMenu");
-        
-        // Remove a paleta de comandos (F1 ou Ctrl+Shift+P)
-        this.editor.commands.removeCommand("openCommandPallete"); 
-        
-        // Remove atalhos que podem atrapalhar (ex: Go to line)
-        this.editor.commands.removeCommand("gotoline"); 
-      },
+  /* --- Branding Dropdown Menu --- */
+  
+  toggleMenu: function(e) {
+    if(e) e.stopPropagation();
+    document.getElementById('app-menu').classList.toggle('show');
+  },
 
-      setupEvents: function() {
-        // Autosave
-        this.editor.on('change', () => {
-          this.updateStatus();
-          clearTimeout(this.saveTimer);
-          this.saveTimer = setTimeout(() => {
-            localStorage.setItem('med_editor_content', this.editor.getValue());
-            this.showSaveStatus();
-          }, 1000);
-        });
-        
-        // Cursor Stats
-        this.editor.selection.on('changeCursor', () => {
-          const pos = this.editor.selection.getCursor();
-          document.getElementById('cursor-pos').innerText = `Ln ${pos.row + 1}`; // Simplificado para mobile
-        });
+  closeMenu: function() {
+    document.getElementById('app-menu').classList.remove('show');
+  },
 
-        // Abrir Arquivo
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if(!file) return;
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            this.editor.setValue(ev.target.result, -1);
-            this.toast("Arquivo aberto");
-          };
-          reader.readAsText(file);
-          e.target.value = '';
-        });
+  /* --- Sidebar --- */
 
-        // Atalho Ctrl+S
-        document.addEventListener('keydown', (e) => {
-          if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            this.saveFile();
+  toggleSidebar: function(forceState) {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('btn-sidebar-toggle');
+    
+    if (typeof forceState === 'boolean') {
+        this.isSidebarOpen = forceState;
+    } else {
+        this.isSidebarOpen = !this.isSidebarOpen;
+    }
+
+    if(this.isSidebarOpen) {
+      sidebar.classList.add('open');
+      btn.classList.add('active');
+      this.showListView();
+    } else {
+      sidebar.classList.remove('open');
+      btn.classList.remove('active');
+    }
+
+    localStorage.setItem('med_editor_sidebar', this.isSidebarOpen);
+    setTimeout(() => { this.editor.resize(); }, 350);
+  },
+
+  switchView: function(viewId) {
+    ['view-list', 'view-edit', 'view-json'].forEach(id => {
+      document.getElementById(id).classList.remove('active');
+    });
+    document.getElementById(viewId).classList.add('active');
+  },
+
+  /* --- Snippet Logic --- */
+
+  showListView: function() {
+    this.switchView('view-list');
+    document.getElementById('sidebar-title').innerText = "Meus Modelos";
+    const list = document.getElementById('snippet-list-ui');
+    list.innerHTML = '';
+    
+    if(this.snippets.length === 0) {
+      list.innerHTML = '<li style="padding:10px; text-align:center; color:var(--text-muted); font-size:13px;">Sem modelos.<br>Crie um novo!</li>';
+      return;
+    }
+
+    this.snippets.forEach((s, index) => {
+      const li = document.createElement('li');
+      li.className = 'snippet-item';
+      li.onclick = (e) => {
+          if(!e.target.closest('button')) {
+             this.editor.insertSnippet(s.content);
+             this.toast(`Modelo "${s.name}" inserido`);
+             if(window.innerWidth < 600) this.toggleSidebar(false);
+             this.editor.focus();
           }
-        });
-      },
+      };
+      li.innerHTML = `
+        <div class="snippet-info">
+          <b>${s.name}</b>
+          <span>${s.trigger}</span>
+        </div>
+        <div class="snippet-actions">
+          <button class="btn-secondary" onclick="app.editSnippet(${index})" title="Editar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-danger" style="color:var(--danger)" onclick="app.deleteSnippet(${index})" title="Excluir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `;
+      list.appendChild(li);
+    });
+  },
 
-      /* --- Funcionalidades Médicas Extras --- */
+  createSnippet: function() {
+    this.editingIndex = -1;
+    document.getElementById('edit-name').value = '';
+    document.getElementById('edit-trigger').value = '';
+    document.getElementById('edit-content').value = '';
+    document.getElementById('sidebar-title').innerText = "Novo Modelo";
+    this.switchView('view-edit');
+  },
 
-      insertDate: function() {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-        this.editor.insert(dateStr + ' - ');
-        this.editor.focus();
-      },
+  editSnippet: function(index) {
+    this.editingIndex = index;
+    const s = this.snippets[index];
+    document.getElementById('edit-name').value = s.name;
+    document.getElementById('edit-trigger').value = s.trigger;
+    document.getElementById('edit-content').value = s.content;
+    document.getElementById('sidebar-title').innerText = "Editar Modelo";
+    this.switchView('view-edit');
+  },
 
-      /* --- Preferences & Load --- */
+  saveCurrentSnippet: function() {
+    const name = document.getElementById('edit-name').value.trim();
+    const trigger = document.getElementById('edit-trigger').value.trim();
+    const content = document.getElementById('edit-content').value;
 
-      loadPreferences: function() {
-        // Content
-        const savedContent = localStorage.getItem('med_editor_content');
-        if(savedContent) this.editor.setValue(savedContent, -1);
-        
-        // Theme
-        const savedTheme = localStorage.getItem('med_editor_theme');
-        if(savedTheme === 'dark') {
-          document.body.classList.add('dark-mode');
-          this.editor.setTheme("ace/theme/tomorrow_night_eighties");
+    if(!name || !trigger) { alert("Preencha Nome e Atalho."); return; }
+
+    const newObj = { name, trigger, content };
+    if(this.editingIndex === -1) {
+        if(this.snippets.find(s => s.trigger === trigger)) {
+            if(!confirm(`O atalho "${trigger}" já existe. Duplicar?`)) return;
         }
+        this.snippets.push(newObj);
+    } else {
+        this.snippets[this.editingIndex] = newObj;
+    }
+    this.persistSnippets();
+    this.showListView();
+    this.toast("Salvo!");
+  },
 
-        // Snippets
-        const savedSnips = localStorage.getItem('med_editor_snippets');
-        if(savedSnips) {
-          try { this.snippets = JSON.parse(savedSnips); } 
-          catch(e) { this.snippets = this.defaultSnippets; }
-        } else {
-          this.snippets = this.defaultSnippets;
+  deleteSnippet: function(index) {
+    if(confirm("Excluir este modelo?")) {
+      this.snippets.splice(index, 1);
+      this.persistSnippets();
+      this.showListView();
+    }
+  },
+
+  showJsonView: function() {
+    document.getElementById('json-editor').value = JSON.stringify(this.snippets, null, 2);
+    document.getElementById('sidebar-title').innerText = "JSON / Backup";
+    this.switchView('view-json');
+  },
+
+  saveJsonImport: function() {
+    try {
+        const parsed = JSON.parse(document.getElementById('json-editor').value);
+        if(!Array.isArray(parsed)) throw new Error("Formato inválido.");
+        if(confirm("Isso substituirá seus modelos atuais. Continuar?")) {
+            this.snippets = parsed;
+            this.persistSnippets();
+            this.showListView();
+            this.toast("Importado!");
         }
-        this.registerSnippets();
+    } catch(e) { alert("Erro: " + e.message); }
+  },
 
-        const isVim = localStorage.getItem('med_editor_vim') === 'true';
-        document.getElementById('check-vim').checked = isVim;
-        if(isVim) this.toggleVim(true);
-      },
+  copyJson: function() {
+    const txt = document.getElementById('json-editor');
+    txt.select();
+    document.execCommand('copy');
+    this.toast("Copiado!");
+  },
 
-      /* --- Snippets Logic --- */
+  persistSnippets: function() {
+    localStorage.setItem('med_editor_snippets', JSON.stringify(this.snippets));
+    this.registerSnippets();
+  },
 
-      registerSnippets: function() {
-        const manager = ace.require("ace/snippets").snippetManager;
-        if(this.editor.session.getMode().$snippets) {
-            this.editor.session.getMode().$snippets = [];
-        }
-        manager.register(this.snippets, "markdown");
-      },
+  registerSnippets: function() {
+    const manager = ace.require("ace/snippets").snippetManager;
+    if(this.editor.session.getMode().$snippets) {
+        this.editor.session.getMode().$snippets = [];
+    }
+    manager.register(this.snippets, "markdown");
+  },
 
-      openSnippets: function() {
-        this.showListView();
-        document.getElementById('modal-snippets').classList.add('open');
-      },
+  /* --- General Functions --- */
 
-      switchView: function(viewId) {
-        ['view-list', 'view-edit', 'view-json'].forEach(id => {
-          document.getElementById(id).classList.remove('active');
-        });
-        document.getElementById(viewId).classList.add('active');
-      },
+  undo: function() { this.editor.undo(); this.editor.focus(); },
+  redo: function() { this.editor.redo(); this.editor.focus(); },
 
-      showListView: function() {
-        this.switchView('view-list');
-        document.getElementById('modal-title').innerText = "Modelos";
-        document.getElementById('btn-raw-json').style.display = 'block';
-        
-        const list = document.getElementById('snippet-list-ui');
-        list.innerHTML = '';
-        
-        if(this.snippets.length === 0) {
-          list.innerHTML = '<li style="padding:20px; text-align:center; color:var(--text-muted)">Nenhum modelo criado.</li>';
-          return;
-        }
+  loadPreferences: function() {
+    const savedContent = localStorage.getItem('med_editor_content');
+    if(savedContent) this.editor.setValue(savedContent, -1);
+    
+    const isDark = localStorage.getItem('med_editor_theme') === 'dark';
+    document.getElementById('check-theme').checked = isDark;
+    if(isDark) {
+      document.body.classList.add('dark-mode');
+      this.editor.setTheme("ace/theme/tomorrow_night_eighties");
+    }
 
-        this.snippets.forEach((s, index) => {
-          const li = document.createElement('li');
-          li.className = 'snippet-item';
-          li.innerHTML = `
-            <div class="snippet-info">
-              <b>${s.name}</b>
-              <span>${s.trigger}</span>
-            </div>
-            <div class="snippet-actions">
-              <button class="btn-secondary icon-only" onclick="app.editSnippet(${index})" title="Editar">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button class="btn-danger icon-only" onclick="app.deleteSnippet(${index})" title="Excluir">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
-            </div>
-          `;
-          list.appendChild(li);
-        });
-      },
+    const savedSnips = localStorage.getItem('med_editor_snippets');
+    try { this.snippets = savedSnips ? JSON.parse(savedSnips) : this.defaultSnippets; } 
+    catch(e) { this.snippets = this.defaultSnippets; }
+    this.registerSnippets();
 
-      createSnippet: function() {
-        this.editingIndex = -1;
-        document.getElementById('edit-name').value = '';
-        document.getElementById('edit-trigger').value = '';
-        document.getElementById('edit-content').value = '';
-        
-        document.getElementById('modal-title').innerText = "Novo Modelo";
-        document.getElementById('btn-raw-json').style.display = 'none';
-        this.switchView('view-edit');
-      },
+    const isVim = localStorage.getItem('med_editor_vim') === 'true';
+    document.getElementById('check-vim').checked = isVim;
+    if(isVim) this.editor.setKeyboardHandler("ace/keyboard/vim");
 
-      editSnippet: function(index) {
-        this.editingIndex = index;
-        const s = this.snippets[index];
-        document.getElementById('edit-name').value = s.name;
-        document.getElementById('edit-trigger').value = s.trigger;
-        document.getElementById('edit-content').value = s.content;
-        
-        document.getElementById('modal-title').innerText = "Editar Modelo";
-        document.getElementById('btn-raw-json').style.display = 'none';
-        this.switchView('view-edit');
-      },
+    const isCmd = localStorage.getItem('med_editor_commands') === 'true';
+    document.getElementById('check-commands').checked = isCmd;
+    this.toggleCommandPalette(isCmd);
+  },
 
-      saveCurrentSnippet: function() {
-        const name = document.getElementById('edit-name').value.trim();
-        const trigger = document.getElementById('edit-trigger').value.trim();
-        const content = document.getElementById('edit-content').value;
+  toggleTheme: function() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('med_editor_theme', isDark ? 'dark' : 'light');
+    this.editor.setTheme(isDark ? "ace/theme/tomorrow_night_eighties" : "ace/theme/chrome");
+    document.getElementById('check-theme').checked = isDark;
+  },
 
-        if(!name || !trigger) {
-          alert("Preencha Nome e Gatilho.");
-          return;
-        }
+  toggleVim: function(enable) {
+    localStorage.setItem('med_editor_vim', enable);
+    this.editor.setKeyboardHandler(enable ? "ace/keyboard/vim" : null);
+    this.toast(enable ? "VIM Ativado" : "Modo Padrão");
+  },
 
-        const newObj = { name, trigger, content };
-
-        if(this.editingIndex === -1) {
-            if(this.snippets.find(s => s.trigger === trigger)) {
-                if(!confirm(`O gatilho "${trigger}" já existe. Criar mesmo assim?`)) return;
+  toggleCommandPalette: function(enable) {
+    localStorage.setItem('med_editor_commands', enable);
+    if(enable) {
+        const commands = ace.require("ace/commands/default_commands").commands;
+        commands.forEach(c => {
+            if(c.name === "showSettingsMenu" || c.name === "openCommandPallete") {
+                this.editor.commands.addCommand(c);
             }
-            this.snippets.push(newObj);
-        } else {
-            this.snippets[this.editingIndex] = newObj;
-        }
+        });
+    } else {
+        this.editor.commands.removeCommand("showSettingsMenu");
+        this.editor.commands.removeCommand("openCommandPallete");
+    }
+  },
 
-        this.persistSnippets();
-        this.showListView();
-        this.toast("Modelo salvo!");
-      },
+  setupEvents: function() {
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('app-menu');
+      const trigger = document.getElementById('brand-trigger');
+      if(menu.classList.contains('show') && !menu.contains(e.target) && !trigger.contains(e.target)) {
+        this.closeMenu();
+      }
+    });
 
-      deleteSnippet: function(index) {
-        if(confirm("Excluir modelo?")) {
-          this.snippets.splice(index, 1);
-          this.persistSnippets();
-          this.showListView();
-        }
-      },
-
-      showJsonView: function() {
-        document.getElementById('json-editor').value = JSON.stringify(this.snippets, null, 2);
-        document.getElementById('modal-title').innerText = "JSON";
-        document.getElementById('btn-raw-json').style.display = 'none';
-        this.switchView('view-json');
-      },
-
-      saveJsonImport: function() {
-        try {
-            const parsed = JSON.parse(document.getElementById('json-editor').value);
-            if(!Array.isArray(parsed)) throw new Error("Formato inválido.");
-            if(confirm("Substituir todos os modelos?")) {
-                this.snippets = parsed;
-                this.persistSnippets();
-                this.showListView();
-                this.toast("Importado!");
-            }
-        } catch(e) {
-            alert("Erro: " + e.message);
-        }
-      },
-
-      copyJson: function() {
-        const txt = document.getElementById('json-editor');
-        txt.select();
-        document.execCommand('copy');
-        this.toast("Copiado!");
-      },
-
-      persistSnippets: function() {
-        localStorage.setItem('med_editor_snippets', JSON.stringify(this.snippets));
-        this.registerSnippets();
-      },
-
-      /* --- General UI Actions --- */
-
-      openAbout: function() {
-        document.getElementById('modal-about').classList.add('open');
-      },
-
-      closeModal: function(id) {
-        document.getElementById(id).classList.remove('open');
-        this.editor.focus();
-      },
-
-      undo: function() { this.editor.undo(); this.editor.focus(); },
-      redo: function() { this.editor.redo(); this.editor.focus(); },
-
-      toggleVim: function(enable) {
-        localStorage.setItem('med_editor_vim', enable);
-        this.editor.setKeyboardHandler(enable ? "ace/keyboard/vim" : null);
-        this.toast(enable ? "VIM Ativado" : "Modo Padrão");
-      },
-
-      toggleTheme: function() {
-        const isDark = document.body.classList.toggle('dark-mode');
-        localStorage.setItem('med_editor_theme', isDark ? 'dark' : 'light');
-        this.editor.setTheme(isDark ? "ace/theme/tomorrow_night_eighties" : "ace/theme/chrome");
-      },
-
-      toggleCase: function() {
-        const session = this.editor.getSession();
-        const range = this.editor.getSelectionRange();
-        if(range.isEmpty()) { 
-           this.editor.selection.selectWord();
-           if(this.editor.getSelectionRange().isEmpty()){
-             this.toast("Selecione o texto"); return;
-           }
-        }
-        
-        const text = session.getTextRange(this.editor.getSelectionRange());
-        let newText = "";
-        
-        if (text === text.toLowerCase()) newText = text.replace(/\b\w/g, l => l.toUpperCase());
-        else if (text === text.toUpperCase()) newText = text.toLowerCase();
-        else newText = text.toUpperCase();
-
-        session.replace(this.editor.getSelectionRange(), newText);
-        this.editor.focus();
-      },
-
-      clearEditor: function() {
-        if(this.editor.getValue().length === 0) return;
-        if(confirm("Limpar o editor?")) {
-            this.editor.setValue("");
-            this.toast("Novo atendimento");
-            this.editor.focus();
-        }
-      },
-
-      saveFile: function() {
-        const content = this.editor.getValue();
-        if(!content) { this.toast("Vazio"); return; }
-        const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-        const a = document.createElement("a");
-        const d = new Date();
-        const dateStr = d.toISOString().slice(0,10);
-        a.href = URL.createObjectURL(blob);
-        a.download = `evolucao_${dateStr}.txt`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      },
-
-      copyToClipboard: function() {
-        const val = this.editor.getValue();
-        if(!val) { this.toast("Nada para copiar"); return; }
-        
-        const success = () => {
-             this.toast("Copiado!");
-             const btn = document.querySelector('button.cta');
-             const originalHTML = btn.innerHTML;
-             btn.innerHTML = "<span>OK!</span>";
-             btn.style.background = "var(--success)";
-             setTimeout(() => {
-                 btn.innerHTML = originalHTML;
-                 btn.style.background = "";
-             }, 1500);
-        };
-
-        if(navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(val).then(success)
-            .catch(() => this.fallbackCopy(val, success));
-        } else {
-          this.fallbackCopy(val, success);
-        }
-        this.editor.focus();
-      },
-
-      fallbackCopy: function(text, cb) {
-        const ta = document.createElement("textarea");
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); cb(); } catch(e) {}
-        document.body.removeChild(ta);
-      },
-
-      updateStatus: function() {
-        document.getElementById('char-count').innerText = this.editor.getValue().length + " caracteres";
-      },
-
-      showSaveStatus: function() {
+    this.editor.on('change', () => {
+      this.updateStatus();
+      clearTimeout(this.saveTimer);
+      this.saveTimer = setTimeout(() => {
+        localStorage.setItem('med_editor_content', this.editor.getValue());
         const el = document.getElementById('save-status');
         el.style.opacity = 1;
         setTimeout(() => el.style.opacity = 0, 2000);
-      },
+      }, 1000);
+    });
+    
+    this.editor.selection.on('changeCursor', () => {
+      const pos = this.editor.selection.getCursor();
+      document.getElementById('cursor-pos').innerText = `Ln ${pos.row + 1}`;
+    });
 
-      toast: function(msg) {
-        const el = document.getElementById('toast');
-        document.getElementById('toast-msg').innerText = msg;
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 2500);
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        this.editor.setValue(ev.target.result, -1);
+        this.toast("Arquivo aberto");
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        this.saveFile();
       }
-    };
+    });
+  },
 
-    app.init();
+  insertDate: function() {
+    const now = new Date();
+    const str = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    this.editor.insert(str + ' - ');
+    this.editor.focus();
+  },
+
+  toggleCase: function() {
+    const session = this.editor.getSession();
+    const range = this.editor.getSelectionRange();
+    if(range.isEmpty()) { 
+       this.editor.selection.selectWord();
+       if(this.editor.getSelectionRange().isEmpty()) return;
+    }
+    const text = session.getTextRange(this.editor.getSelectionRange());
+    let newText = (text === text.toLowerCase()) ? text.replace(/\b\w/g, l => l.toUpperCase()) :
+                  (text === text.toUpperCase()) ? text.toLowerCase() : text.toUpperCase();
+    session.replace(this.editor.getSelectionRange(), newText);
+    this.editor.focus();
+  },
+
+  clearEditor: function() {
+    if(confirm("Limpar tudo?")) {
+        this.editor.setValue("");
+        this.toast("Editor limpo");
+        this.editor.focus();
+    }
+  },
+
+  saveFile: function() {
+    const content = this.editor.getValue();
+    if(!content) { this.toast("Editor vazio"); return; }
+    const blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+    const a = document.createElement("a");
+    const dateStr = new Date().toISOString().slice(0,10);
+    a.href = URL.createObjectURL(blob);
+    a.download = `evolucao_${dateStr}.txt`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  },
+
+  copyToClipboard: function() {
+    const val = this.editor.getValue();
+    if(!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+         this.toast("Copiado!");
+         const btn = document.querySelector('button.cta');
+         btn.style.background = "var(--success)";
+         setTimeout(() => btn.style.background = "", 1000);
+    });
+    this.editor.focus();
+  },
+
+  updateStatus: function() {
+    document.getElementById('char-count').innerText = this.editor.getValue().length + " chars";
+  },
+
+  toast: function(msg) {
+    const el = document.getElementById('toast');
+    document.getElementById('toast-msg').innerText = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2500);
+  }
+};
+
+app.init();
   </script>
 </body>
 </html>
